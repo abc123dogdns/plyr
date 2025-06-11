@@ -25,6 +25,7 @@
     /* 去掉音量控制 */
     .plyr__control--volume { display: none !important; }
     .aplayer-control { display: none !important; }  /* APlayer 去除音量调节 */
+    #currentPlaying { margin: 20px 0; font-size: 18px; color: #ccc; }
   </style>
 </head>
 <body>
@@ -35,6 +36,7 @@
     <button onclick="loadVideo()">视频</button>
   </div>
 
+  <div id="currentPlaying">当前正在播放：暂无</div>
   <div id="playlist"></div>
 
   <div id="player-container">
@@ -48,6 +50,7 @@
     const videoContainer = document.getElementById("player-container");
     const aplayerContainer = document.getElementById("aplayer");
     const playlistEl = document.getElementById("playlist");
+    const currentPlaying = document.getElementById("currentPlaying");
 
     const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
 
@@ -75,13 +78,13 @@
         .then(res => res.json())
         .then(data => {
           console.log("音频播放列表数据：", data);  // 打印数据
-          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playAudio(${index})">${item.title}</li>`).join('');
+          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playAudio(${index}, '${item.title}')">${item.title}</li>`).join('');
           window.aplayerData = data;
         })
         .catch(error => console.error("加载音频列表失败", error));
     }
 
-    function playAudio(index) {
+    function playAudio(index, title) {
       const data = window.aplayerData;
       const proxyUrl = toWorkerUrl(data[index].url);  // 使用正确的字段
       clearAll();
@@ -89,11 +92,12 @@
       aplayer = new APlayer({
         container: aplayerContainer,
         audio: [{
-          name: data[index].title,  // 使用正确的字段
+          name: title,  // 使用正确的字段
           url: proxyUrl,  // 使用中转的URL
         }]
       });
       aplayer.play();  // 自动播放
+      currentPlaying.innerHTML = `当前正在播放：${title}`;
     }
 
     function loadVideo() {
@@ -102,15 +106,16 @@
         .then(res => res.json())
         .then(data => {
           console.log("视频播放列表数据：", data);  // 打印数据
-          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playVideo('${item.url}')">${item.title}</li>`).join('');
+          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playVideo('${item.url}', '${item.title}')">${item.title}</li>`).join('');
         })
         .catch(error => console.error("加载视频列表失败", error));
     }
 
-    function playVideo(url) {
+    function playVideo(url, title) {
       const proxyUrl = toWorkerUrl(url);  // 生成中转的URL
       clearAll();
       videoContainer.style.display = "block";
+      currentPlaying.innerHTML = `当前正在播放：${title}`;
 
       if (url.endsWith(".mp4")) {
         // 如果是 .mp4 格式，直接通过 Plyr 播放
