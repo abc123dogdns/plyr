@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>PLYR 播放器 (M3U8 支持)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8"></script>
+  <style>
+    body { background: #111; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
+    video { max-width: 720px; width: 100%; margin: auto; border-radius: 12px; box-shadow: 0 0 12px #000; }
+  </style>
+</head>
+<body>
+  <h1>M3U8 播放测试</h1>
+  <video id="player" controls playsinline></video>
+
+  <script>
+    // 🔧 改这里两个变量即可：
+    const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
+    const ORIGINAL_M3U8 = "http://117.148.187.46/hwltc.tv.cdn.zj.chinamobile.com/PLTV/88888888/224/3221230877/01.m3u8";  // 你的 M3U8 地址（http 或 https 均可）
+
+    // === 自动处理参数 ===
+    function toWorkerUrl(fullUrl) {
+      const url = new URL(fullUrl);
+      const base = url.protocol === "https:" ? "/https/" : "/http/";
+      return WORKER_URL + base + url.hostname + url.pathname + url.search;
+    }
+
+    const proxyM3u8 = toWorkerUrl(ORIGINAL_M3U8);
+    const video = document.getElementById("player");
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(proxyM3u8);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play();
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = proxyM3u8;
+      video.addEventListener('loadedmetadata', () => {
+        video.play();
+      });
+    } else {
+      alert("当前浏览器不支持 M3U8 播放");
+    }
+
+    const player = new Plyr(video);
+  </script>
+</body>
+</html>
