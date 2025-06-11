@@ -15,16 +15,59 @@
   <script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script>
 
   <style>
-    body { background: #111; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
-    button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
-    ul { list-style: none; padding: 0; max-width: 720px; margin: auto; }
-    li { padding: 10px; background: #222; margin: 5px 0; border-radius: 8px; cursor: pointer; }
-    li:hover { background: #333; }
-    #player-container, #aplayer { max-width: 720px; margin: 20px auto; display: none; }
-    video { width: 100%; border-radius: 12px; box-shadow: 0 0 12px #000; }
+    body { 
+      background: #111; 
+      color: #fff; 
+      font-family: sans-serif; 
+      text-align: center; 
+      padding: 20px; 
+    }
+    button { 
+      margin: 10px; 
+      padding: 10px 20px; 
+      font-size: 16px; 
+      cursor: pointer; 
+    }
+    ul { 
+      list-style: none; 
+      padding: 0; 
+      max-width: 720px; 
+      margin: auto; 
+    }
+    li { 
+      padding: 10px; 
+      background: #222; 
+      margin: 5px 0; 
+      border-radius: 8px; 
+      cursor: pointer; 
+    }
+    li:hover { 
+      background: #333; 
+    }
+    #player-container, #aplayer { 
+      max-width: 100%; 
+      margin: 20px auto; 
+      display: none; 
+    }
+    video { 
+      width: 100%; 
+      border-radius: 12px; 
+      box-shadow: 0 0 12px #000; 
+    }
     /* 去掉音量控制 */
-    .plyr__control--volume { display: none !important; }
-    .aplayer-control { display: none !important; }  /* APlayer 去除音量调节 */
+    .plyr__control--volume { 
+      display: none !important; 
+    }
+    .aplayer-control { 
+      display: none !important; 
+    }  /* APlayer 去除音量调节 */
+    
+    /* 针对小屏设备的调整 */
+    @media (max-width: 480px) {
+      video, .aplayer {
+        width: 100% !important; /* 确保播放器宽度适配小屏 */
+      }
+    }
   </style>
 </head>
 <body>
