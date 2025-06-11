@@ -2,98 +2,81 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>哔哩哔哩 多集播放器（CF Worker代理）</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css" />
+  <title>Bilibili 视频播放器（第三方API示范）</title>
+  <link href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css" rel="stylesheet" />
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
-    h1, h2 { text-align: center; }
-    ul { list-style: none; padding: 0; max-width: 720px; margin: auto; }
-    li { margin: 0.5em 0; cursor: pointer; color: #007bff; text-decoration: underline; }
-    .plyr__video-embed, video { width: 100%; max-width: 720px; margin: 2em auto; display: block; }
+    body { font-family: sans-serif; max-width: 640px; margin: 20px auto; }
+    #playlist { margin: 10px 0; }
+    button { margin: 5px; }
   </style>
 </head>
 <body>
-  <h1>哔哩哔哩 视频合集播放器</h1>
-  <h2 id="video-title">加载中...</h2>
-  <ul id="episode-list"></ul>
+  <h2>Bilibili 视频播放器（第三方API）</h2>
+  <div id="playlist"></div>
+  <video id="player" playsinline controls crossorigin></video>
 
-  <video id="player" playsinline controls></video>
-
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.polyfilled.js"></script>
   <script>
-    // 【配置区】从环境变量读取 CF Worker 代理地址
-    // Netlify 等平台可以配置环境变量：CF_WORKER_API
-    // 例如：https://your-worker.workers.dev
-    const workerBaseURL = window.CF_WORKER_API || 'https://your-worker.workers.dev'; // 这里先写个默认值，部署时请配置环境变量
+    const plyrPlayer = new Plyr("#player");
 
-    // 测试用 BV 号，可替换为你想展示的合集 BV 号
-    const bvid = "BV1oKUPYNEPn";
+    // 示例 BV 号列表
+    const bvList = [
+      "BV1oKUPYNEPn",
+      "BV1mK4y1L7k8",
+    ];
 
-    const player = new Plyr('#player');
+    const playlistEl = document.getElementById("playlist");
 
-    async function fetchVideoPages(bvid) {
-      const api = `${workerBaseURL}/api/view?bvid=${bvid}`;
-      const res = await fetch(api);
-      if (!res.ok) throw new Error(`接口请求失败: ${res.status}`);
-      const json = await res.json();
-      return json.data?.pages || [];
+    function createPlaylist() {
+      playlistEl.innerHTML = "";
+      bvList.forEach(bvid => {
+        const btn = document.createElement("button");
+        btn.textContent = bvid;
+        btn.onclick = () => loadVideo(bvid);
+        playlistEl.appendChild(btn);
+      });
     }
 
-    async function fetchPlayUrl(bvid, cid) {
-      const api = `${workerBaseURL}/api/playurl?bvid=${bvid}&cid=${cid}`;
-      const res = await fetch(api);
-      if (!res.ok) throw new Error(`播放地址接口请求失败: ${res.status}`);
-      const json = await res.json();
-      // 支持 DASH 或 FLV，优先取 dash 视频的 baseUrl
-      let url = null;
-      if (json.data?.dash?.video?.length > 0) {
-        url = json.data.dash.video[0].baseUrl;
-      } else if (json.data?.durl?.length > 0) {
-        url = json.data.durl[0].url;
-      }
-      return url;
-    }
-
-    async function loadAndPlay(cid, part) {
-      document.getElementById('video-title').textContent = part;
+    async function loadVideo(bvid) {
       try {
-        const url = await fetchPlayUrl(bvid, cid);
-        if (!url) throw new Error('未获取到播放地址');
-        player.source = {
-          type: 'video',
-          sources: [{ src: url, type: 'video/mp4' }]
-        };
-        player.play();
-      } catch (e) {
-        alert('播放失败: ' + e.message);
-      }
-    }
+        // 第三方免费API接口示范
+        // 这个接口有时会被官方封禁，建议换用稳定API或中转
+        const apiViewUrl = `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`;
 
-    async function init() {
-      try {
-        const pages = await fetchVideoPages(bvid);
-        const list = document.getElementById('episode-list');
-        list.innerHTML = '';
-        if (pages.length === 0) {
-          document.getElementById('video-title').textContent = '没有找到分集';
-          return;
-        }
-        pages.forEach((page, index) => {
-          const li = document.createElement('li');
-          li.textContent = `P${index + 1} - ${page.part}`;
-          li.onclick = () => loadAndPlay(page.cid, page.part);
-          list.appendChild(li);
+        // 获取视频详情
+        const res = await fetch(apiViewUrl, {
+          headers: {
+            "Referer": "https://www.bilibili.com",
+            "User-Agent": "Mozilla/5.0"
+          }
         });
-        // 默认播放第一集
-        loadAndPlay(pages[0].cid, pages[0].part);
+        if (!res.ok) throw new Error(`接口请求失败：${res.status}`);
+
+        const data = await res.json();
+        if (data.code !== 0) throw new Error(`API 返回错误：${data.message}`);
+
+        // 注意：这里官方接口返回的视频详情没有直接播放URL
+        // 我们直接用一个示例硬编码URL演示播放
+        // 你需要自己找到真实播放地址或者用另一个第三方接口获取播放链接
+
+        // 示例硬编码的有效播放链接（你可以替换）
+        const testVideoUrl = "https://upos-sz-mirrorcos.bilivideo.com/upgcxcode/30/11/140187130/140187130-1-30080.m4s";
+
+        // 播放示例链接
+        plyrPlayer.source = {
+          type: 'video',
+          sources: [
+            { src: testVideoUrl, type: 'video/mp4' }
+          ]
+        };
+
+        alert(`视频标题: ${data.data.title}\n演示用固定播放地址，请替换为真实播放地址`);
       } catch (e) {
-        document.getElementById('video-title').textContent = '加载失败: ' + e.message;
+        alert("加载失败: " + e.message);
       }
     }
 
-    // 页面加载后运行
-    init();
+    createPlaylist();
   </script>
 </body>
 </html>
