@@ -71,23 +71,23 @@
       fetch("aplayer_playlist.json")
         .then(res => res.json())
         .then(data => {
-          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playAudio(${index})">${item.name}</li>`).join('');
+          console.log("音频播放列表数据：", data);  // 打印数据
+          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playAudio(${index})">${item.TITLE}</li>`).join('');
           window.aplayerData = data;
-        });
+        })
+        .catch(error => console.error("加载音频列表失败", error));
     }
 
     function playAudio(index) {
       const data = window.aplayerData;
-      const proxyUrl = toWorkerUrl(data[index].url);  // 生成中转的URL
+      const proxyUrl = toWorkerUrl(data[index].URL);  // 使用正确的字段
       clearAll();
       aplayerContainer.style.display = "block";
       aplayer = new APlayer({
         container: aplayerContainer,
         audio: [{
-          name: data[index].name,
-          artist: data[index].artist,
+          name: data[index].TITLE,  // 使用正确的字段
           url: proxyUrl,  // 使用中转的URL
-          cover: data[index].cover
         }]
       });
     }
@@ -97,8 +97,10 @@
       fetch("dplayer_playlist.json")
         .then(res => res.json())
         .then(data => {
-          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playVideo('${item.url}')">${item.name}</li>`).join('');
-        });
+          console.log("视频播放列表数据：", data);  // 打印数据
+          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playVideo('${item.URL}')">${item.TITLE}</li>`).join('');
+        })
+        .catch(error => console.error("加载视频列表失败", error));
     }
 
     function playVideo(url) {
