@@ -6,9 +6,8 @@
   <title>统一音视频播放器</title>
   <link href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css" rel="stylesheet">
   <style>
-    /* Basic styling for the body and controls */
     body {
-      font-family: 'Inter', sans-serif; /* Using Inter font as per instructions */
+      font-family: 'Inter', sans-serif;
       background: #f9f9f9;
       text-align: center;
       padding: 1rem;
@@ -16,38 +15,33 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh; /* Ensure full viewport height */
+      min-height: 100vh;
     }
 
-    /* Styling for the main heading */
     h1 {
       color: #333;
       margin-bottom: 1.5rem;
     }
 
-    /* Container for control buttons */
     .controls {
       display: flex;
-      gap: 1rem; /* Space between buttons */
+      gap: 1rem;
       margin-bottom: 2rem;
     }
 
-    /* Styling for control buttons */
     .controls button {
       padding: 0.8rem 1.5rem;
       font-size: 1.1rem;
       border: none;
-      border-radius: 8px; /* Rounded corners */
+      border-radius: 8px;
       background-color: #007bff;
       color: white;
       cursor: pointer;
       transition: background-color 0.3s ease, transform 0.2s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     .controls button:hover {
       background-color: #0056b3;
-      transform: translateY(-2px); /* Slight lift on hover */
     }
 
     .controls button:active {
@@ -55,68 +49,45 @@
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    /* Playlist container */
     #playlist {
       max-width: 800px;
-      width: 90%; /* Responsive width */
+      width: 90%;
       margin: 1rem auto;
       list-style-type: none;
       padding: 0;
       background-color: #fff;
-      border-radius: 10px; /* Rounded corners */
+      border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      overflow: hidden; /* Hide overflow for rounded corners */
     }
 
-    /* Playlist items */
     #playlist li {
       cursor: pointer;
-      margin: 0; /* Remove default margin */
+      margin: 0;
       padding: 0.8rem 1.5rem;
       background-color: #fff;
       border-bottom: 1px solid #eee;
       text-align: left;
-      transition: background-color 0.2s ease;
     }
 
     #playlist li:last-child {
-      border-bottom: none; /* No border for the last item */
+      border-bottom: none;
     }
 
     #playlist li:hover {
       background-color: #f0f0f0;
     }
 
-    /* Video player container */
     #video-player {
       max-width: 800px;
-      width: 90%; /* Responsive width */
+      width: 90%;
       margin: 2rem auto;
-      display: none; /* Hidden by default */
-      border-radius: 10px; /* Rounded corners for the player */
-      overflow: hidden; /* Ensure video player also has rounded corners */
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      display: none;
     }
 
-    /* Plyr video element */
     #plyr-video {
       width: 100%;
-      height: auto; /* Maintain aspect ratio */
     }
 
-    /* Responsive adjustments */
-    @media (max-width: 600px) {
-      .controls {
-        flex-direction: column;
-        gap: 0.8rem;
-      }
-      .controls button {
-        width: 100%; /* Full width buttons on small screens */
-      }
-      #playlist, #video-player {
-        width: 95%;
-      }
-    }
   </style>
 </head>
 <body>
@@ -131,53 +102,34 @@
     <video id="plyr-video" class="plyr" controls></video>
   </div>
 
-  <!-- Plyr.js library -->
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js"></script>
-  <!-- HLS.js library for M3U8 support -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
 
   <script>
-    let player; // Plyr 播放器实例
-    let hls;    // HLS.js 实例
-
+    let player;
+    let hls;
     const proxy = "https://m3u8-http-proxy.abc123abc123.workers.dev"; // Cloudflare Worker 地址
 
-    /**
-     * Initializes the Plyr player.
-     * 初始化 Plyr 播放器。
-     */
     function initializePlayer() {
       const videoElement = document.getElementById('plyr-video');
       player = new Plyr(videoElement, {
         autoplay: true,
         controls: ['play', 'pause', 'rewind', 'fast-forward', 'current-time', 'duration', 'mute', 'volume', 'fullscreen', 'settings']
       });
-      console.log("Plyr player initialized.");
 
-      // Listen for when Plyr is ready
       player.on('ready', () => {
         console.log('Plyr is ready.');
       });
 
-      // Listen for errors from Plyr
       player.on('error', (event) => {
         console.error('Plyr error:', event);
       });
     }
 
-    /**
-     * Handles the source for the Plyr player, specifically for M3U8 using HLS.js.
-     * 处理 Plyr 播放器的源，特别是使用 HLS.js 播放 M3U8。
-     * @param {string} url - The URL of the media. 媒体的 URL。
-     * @param {string} type - The type of media ('audio' or 'video'). 媒体类型（'audio' 或 'video'）。
-     */
     function setPlyrSource(url, type) {
       const videoElement = document.getElementById('plyr-video');
 
-      // Pause current playback to prepare for source change
       player.pause();
-
-      // Always destroy previous HLS instance if it exists
       if (hls) {
         hls.destroy();
         hls = null;
@@ -189,10 +141,10 @@
       if (url.endsWith(".m3u8") && Hls.isSupported()) {
         hls = new Hls();
         hls.loadSource(url);
-        hls.attachMedia(videoElement); 
+        hls.attachMedia(videoElement);
 
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          player.play().catch(err => console.error('Error playing media after HLS manifest parsed:', err));
+          player.play().catch(err => console.error('Error playing media:', err));
         });
 
         hls.on(Hls.Events.ERROR, function (event, data) {
@@ -220,14 +172,10 @@
             type: mimeType
           }]
         };
-        player.play().catch(err => console.error('Error playing media (non-HLS):', err));
+        player.play().catch(err => console.error('Error playing media:', err));
       }
     }
 
-    /**
-     * Loads audio playlist from 'aplayer_playlist.json'.
-     * 从 'aplayer_playlist.json' 加载音频播放列表。
-     */
     function loadAudio() {
       document.getElementById('video-player').style.display = 'none';
       if (player && !player.paused) {
@@ -255,19 +203,10 @@
         .catch(err => console.error("Failed to load audio playlist:", err));
     }
 
-    /**
-     * Plays the selected audio track.
-     * 播放选定的音频轨道。
-     * @param {string} url - The URL of the audio track. 音频轨道的 URL。
-     */
     function playAudio(url) {
       setPlyrSource(url, 'audio');
     }
 
-    /**
-     * Loads video playlist from 'video_playlist.json'.
-     * 从 'video_playlist.json' 加载视频播放列表。
-     */
     function loadVideo() {
       document.getElementById('video-player').style.display = 'block';
 
@@ -292,11 +231,6 @@
         .catch(err => console.error("Failed to load video playlist:", err));
     }
 
-    /**
-     * Plays the selected video.
-     * 播放选定的视频。
-     * @param {string} url - The URL of the video. 视频的 URL。
-     */
     function playVideo(url) {
       setPlyrSource(url, 'video');
     }
