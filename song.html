@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spotify 歌单播放器</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #1DB954;
+    }
+    .playlist-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .playlist-buttons button {
+      background-color: #1DB954;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    .playlist-buttons button:hover {
+      background-color: #17a74a;
+    }
+    iframe {
+      border-radius: 12px;
+      width: 100%;
+      max-width: 800px;
+      height: 380px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎵 Spotify 歌单播放器</h1>
+  <div class="playlist-buttons">
+    <button onclick="loadPlaylist('37i9dQZF1DX4WYpdgoIcn6')">每日流行</button>
+    <button onclick="loadPlaylist('37i9dQZF1DWXRqgorJj26U')">轻音乐</button>
+    <button onclick="loadPlaylist('37i9dQZF1DX6VdMW310YC7')">电子节奏</button>
+    <button onclick="loadPlaylist('37i9dQZF1DXcBWIGoYBM5M')">Top Hits 全球</button>
+  </div>
+
+  <div id="player-container">
+    <iframe id="spotify-player" 
+      src="https://open.spotify.com/embed/playlist/37i9dQZF1DX4WYpdgoIcn6?utm_source=generator" 
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+      loading="lazy">
+    </iframe>
+  </div>
+
+  <script>
+    function loadPlaylist(playlistId) {
+      const iframe = document.getElementById('spotify-player');
+      iframe.src = `https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator`;
+    }
+  </script>
+</body>
+</html>
