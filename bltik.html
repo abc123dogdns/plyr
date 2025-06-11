@@ -2,8 +2,8 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>哔哩哔哩 多集视频播放器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>哔哩哔哩 多集视频播放器（CF Worker代理）</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css" />
   <style>
     body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
@@ -22,19 +22,29 @@
 
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.min.js"></script>
   <script>
-    const bvid = "BV1oKUPYNEPn"; // 可更换为任意 BV 号
+    const workerBaseURL = 'https://bili-tik-proxy.abc123abc123.workers.dev'; // 修改这里
+
+    const bvid = "BV1oKUPYNEPn"; // 可换成任何 BV 号
     const player = new Plyr('#player');
 
     async function fetchVideoPages(bvid) {
-      const api = `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`;
+      const api = `${workerBaseURL}/api/view?bvid=${bvid}`;
       const res = await fetch(api);
+      if (!res.ok) throw new Error(`接口请求失败: ${res.status}`);
       const json = await res.json();
       return json.data?.pages || [];
     }
 
     async function fetchPlayUrl(bvid, cid) {
+      // 播放地址获取不用代理，直接请求b站接口即可
       const api = `https://api.bilibili.com/x/player/playurl?bvid=${bvid}&cid=${cid}&qn=80&fnval=1`;
-      const res = await fetch(api);
+      const res = await fetch(api, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+          'Referer': 'https://www.bilibili.com/',
+          'Origin': 'https://www.bilibili.com'
+        }
+      });
       const json = await res.json();
       return json.data?.durl?.[0]?.url || null;
     }
@@ -54,16 +64,24 @@
     }
 
     async function init() {
-      const pages = await fetchVideoPages(bvid);
-      const list = document.getElementById('episode-list');
-      list.innerHTML = '';
-      pages.forEach((page, index) => {
-        const li = document.createElement('li');
-        li.textContent = `P${index + 1} - ${page.part}`;
-        li.onclick = () => loadAndPlay(page.cid, page.part);
-        list.appendChild(li);
-      });
-      if (pages.length > 0) loadAndPlay(pages[0].cid, pages[0].part);
+      try {
+        const pages = await fetchVideoPages(bvid);
+        const list = document.getElementById('episode-list');
+        list.innerHTML = '';
+        if (pages.length === 0) {
+          document.getElementById('video-title').textContent = '没有找到分集';
+          return;
+        }
+        pages.forEach((page, index) => {
+          const li = document.createElement('li');
+          li.textContent = `P${index + 1} - ${page.part}`;
+          li.onclick = () => loadAndPlay(page.cid, page.part);
+          list.appendChild(li);
+        });
+        loadAndPlay(pages[0].cid, pages[0].part);
+      } catch (e) {
+        document.getElementById('video-title').textContent = '加载失败: ' + e.message;
+      }
     }
 
     init();
