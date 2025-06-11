@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Plyr 播放列表自动连播</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css" />
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 1rem; }
+    ul { padding: 0; list-style: none; }
+    li { padding: 0.5em; cursor: pointer; color: #1e88e5; }
+    li.active { background: #e3f2fd; font-weight: bold; }
+    li:hover { background: #f1f1f1; }
+  </style>
+</head>
+<body>
+
+  <h2>📺 Plyr 播放器 + 动态歌单 + 自动连播</h2>
+
+  <!-- 播放器容器 -->
+  <div id="player" data-plyr-provider="youtube" data-plyr-embed-id=""></div>
+
+  <!-- 播放列表 -->
+  <h3>🎵 歌单</h3>
+  <ul id="playlist"></ul>
+
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.polyfilled.js"></script>
+  <script>
+    const playlistData = [
+      { id: "bTqVqk7FSmY", title: "Red Bull 空中特技" },
+      { id: "dQw4w9WgXcQ", title: "Never Gonna Give You Up" },
+      { id: "M7lc1UVf-VE", title: "YouTube API 示例视频" }
+    ];
+
+    const playlistEl = document.getElementById('playlist');
+    const player = new Plyr('#player');
+
+    let currentIndex = 0;
+
+    // 渲染播放列表
+    function renderPlaylist() {
+      playlistEl.innerHTML = '';
+      playlistData.forEach((video, index) => {
+        const li = document.createElement('li');
+        li.textContent = `🎬 ${video.title}`;
+        li.setAttribute('data-index', index);
+        if (index === currentIndex) li.classList.add('active');
+        playlistEl.appendChild(li);
+      });
+    }
+
+    // 加载指定视频
+    function loadVideo(index) {
+      const video = playlistData[index];
+      if (!video) return;
+
+      currentIndex = index;
+      player.source = {
+        type: 'video',
+        sources: [{
+          src: video.id,
+          provider: 'youtube'
+        }]
+      };
+
+      // 更新高亮
+      document.querySelectorAll('#playlist li').forEach(li => li.classList.remove('active'));
+      const currentLi = document.querySelector(`#playlist li[data-index="${index}"]`);
+      if (currentLi) currentLi.classList.add('active');
+    }
+
+    // 绑定点击事件
+    playlistEl.addEventListener('click', e => {
+      if (e.target.tagName === 'LI') {
+        const index = parseInt(e.target.getAttribute('data-index'), 10);
+        loadVideo(index);
+      }
+    });
+
+    // 自动播放下一个
+    player.on('ended', () => {
+      const nextIndex = currentIndex + 1;
+      if (nextIndex < playlistData.length) {
+        loadVideo(nextIndex);
+      } else {
+        alert("🎉 歌单播放完毕！");
+      }
+    });
+
+    // 初始化
+    renderPlaylist();
+    loadVideo(currentIndex);
+  </script>
+
+</body>
+</html>
