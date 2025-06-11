@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Plyr 播放列表示例</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css" />
+  <style>
+    body { max-width: 720px; margin: 2rem auto; font-family: sans-serif; }
+    ul { padding: 0; list-style: none; }
+    li { margin: 0.5em 0; cursor: pointer; color: blue; text-decoration: underline; }
+    li:hover { color: darkblue; }
+  </style>
+</head>
+<body>
+
+  <h2>🎵 Plyr 播放列表</h2>
+
+  <!-- 播放器 -->
+  <div id="player" data-plyr-provider="youtube" data-plyr-embed-id="bTqVqk7FSmY"></div>
+
+  <!-- 视频列表 -->
+  <ul>
+    <li data-id="bTqVqk7FSmY">🎬 视频 1：Red Bull 空中特技</li>
+    <li data-id="dQw4w9WgXcQ">🎬 视频 2：Rick Astley - Never Gonna Give You Up</li>
+    <li data-id="M7lc1UVf-VE">🎬 视频 3：YouTube API 示例视频</li>
+  </ul>
+
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.polyfilled.js"></script>
+  <script>
+    const player = new Plyr('#player');
+
+    document.querySelectorAll('li').forEach(item => {
+      item.addEventListener('click', () => {
+        const newId = item.getAttribute('data-id');
+        player.source = {
+          type: 'video',
+          sources: [{
+            src: newId,
+            provider: 'youtube'
+          }]
+        };
+      });
+    });
+  </script>
+
+</body>
+</html>
