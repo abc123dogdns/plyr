@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PLYR M3U8 播放示例</title>
+
+  <!-- Plyr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
+
+  <!-- HLS.js -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.2/dist/hls.min.js"></script>
+
+  <!-- Plyr.js -->
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
+
+  <style>
+    body {
+      background: #111;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    #player {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>PLYR M3U8 播放示例</h1>
+
+  <video id="player" playsinline controls></video>
+
+  <script>
+    // 仅修改这里两行
+    const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
+    const ORIGINAL_M3U8 = "https://txmov2.a.kwimgs.com/bs3/video-hls/5251197255879398624_hlshd15.m3u8";  // 你的 M3U8 地址（http 或 https 均可）
+
+    // 转换成 Worker 代理路径格式
+    function toWorkerUrl(url) {
+      if (url.startsWith("https://")) {
+        return WORKER_URL + "/https/" + url.slice(8);
+      } else if (url.startsWith("http://")) {
+        return WORKER_URL + "/http/" + url.slice(7);
+      } else {
+        throw new Error("地址必须以 http:// 或 https:// 开头");
+      }
+    }
+
+    const sourceUrl = toWorkerUrl(ORIGINAL_M3U8);
+
+    const video = document.getElementById("player");
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(sourceUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play();
+      });
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = sourceUrl;
+      video.addEventListener("loadedmetadata", () => {
+        video.play();
+      });
+    } else {
+      alert("当前浏览器不支持播放 M3U8 视频");
+    }
+
+    // 初始化 Plyr
+    const player = new Plyr(video);
+  </script>
+</body>
+</html>
