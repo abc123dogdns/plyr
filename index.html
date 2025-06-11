@@ -22,6 +22,9 @@
     li:hover { background: #333; }
     #player-container, #aplayer { max-width: 720px; margin: 20px auto; display: none; }
     video { width: 100%; border-radius: 12px; box-shadow: 0 0 12px #000; }
+    /* 去掉音量控制 */
+    .plyr__control--volume { display: none !important; }
+    .aplayer-control { display: none !important; }  /* APlayer 去除音量调节 */
   </style>
 </head>
 <body>
@@ -90,6 +93,7 @@
           url: proxyUrl,  // 使用中转的URL
         }]
       });
+      aplayer.play();  // 自动播放
     }
 
     function loadVideo() {
@@ -107,16 +111,19 @@
       const proxyUrl = toWorkerUrl(url);  // 生成中转的URL
       clearAll();
       videoContainer.style.display = "block";
-      if (Hls.isSupported()) {
+
+      if (url.endsWith(".mp4")) {
+        // 如果是 .mp4 格式，直接通过 Plyr 播放
+        videoEl.src = proxyUrl;  // 使用中转的URL
+        videoEl.play();  // 自动播放
+      } else if (Hls.isSupported() && url.endsWith(".m3u8")) {
+        // 如果是 HLS 格式，使用 Hls.js 播放
         const hls = new Hls();
         hls.loadSource(proxyUrl);  // 使用中转的URL
         hls.attachMedia(videoEl);
         hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
-      } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
-        videoEl.src = proxyUrl;  // 使用中转的URL
-        videoEl.addEventListener('loadedmetadata', () => videoEl.play());
       } else {
-        alert("浏览器不支持 M3U8 播放");
+        alert("浏览器不支持此格式");
       }
     }
   </script>
