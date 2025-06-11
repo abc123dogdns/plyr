@@ -80,7 +80,7 @@
 
     function playAudio(index) {
       const data = window.aplayerData;
-      const proxyUrl = toWorkerUrl(data[index].URL);  // 使用正确的字段
+      const proxyUrl = toWorkerUrl(data[index].url);  // 使用正确的字段
       clearAll();
       aplayerContainer.style.display = "block";
       aplayer = new APlayer({
