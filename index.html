@@ -1,363 +1,121 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>统一音视频播放器</title>
-  <link href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>统一播放器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Plyr 样式 & 脚本 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.2"></script>
+  
+  <!-- APlayer 样式 & 脚本 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script>
+
   <style>
-    /* Basic styling for the body and controls */
-    body {
-      font-family: 'Inter', sans-serif; /* Using Inter font as per instructions */
-      background: #f9f9f9;
-      text-align: center;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh; /* Ensure full viewport height */
-    }
-
-    /* Styling for the main heading */
-    h1 {
-      color: #333;
-      margin-bottom: 1.5rem;
-    }
-
-    /* Container for control buttons */
-    .controls {
-      display: flex;
-      gap: 1rem; /* Space between buttons */
-      margin-bottom: 2rem;
-    }
-
-    /* Styling for control buttons */
-    .controls button {
-      padding: 0.8rem 1.5rem;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 8px; /* Rounded corners */
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .controls button:hover {
-      background-color: #0056b3;
-      transform: translateY(-2px); /* Slight lift on hover */
-    }
-
-    .controls button:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Playlist container */
-    #playlist {
-      max-width: 800px;
-      width: 90%; /* Responsive width */
-      margin: 1rem auto;
-      list-style-type: none;
-      padding: 0;
-      background-color: #fff;
-      border-radius: 10px; /* Rounded corners */
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      overflow: hidden; /* Hide overflow for rounded corners */
-    }
-
-    /* Playlist items */
-    #playlist li {
-      cursor: pointer;
-      margin: 0; /* Remove default margin */
-      padding: 0.8rem 1.5rem;
-      background-color: #fff;
-      border-bottom: 1px solid #eee;
-      text-align: left;
-      transition: background-color 0.2s ease;
-    }
-
-    #playlist li:last-child {
-      border-bottom: none; /* No border for the last item */
-    }
-
-    #playlist li:hover {
-      background-color: #f0f0f0;
-    }
-
-    /* Video player container */
-    #video-player {
-      max-width: 800px;
-      width: 90%; /* Responsive width */
-      margin: 2rem auto;
-      display: none; /* Hidden by default */
-      border-radius: 10px; /* Rounded corners for the player */
-      overflow: hidden; /* Ensure video player also has rounded corners */
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Plyr video element */
-    #plyr-video {
-      width: 100%;
-      height: auto; /* Maintain aspect ratio */
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 600px) {
-      .controls {
-        flex-direction: column;
-        gap: 0.8rem;
-      }
-      .controls button {
-        width: 100%; /* Full width buttons on small screens */
-      }
-      #playlist, #video-player {
-        width: 95%;
-      }
-    }
+    body { background: #111; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    ul { list-style: none; padding: 0; max-width: 720px; margin: auto; }
+    li { padding: 10px; background: #222; margin: 5px 0; border-radius: 8px; cursor: pointer; }
+    li:hover { background: #333; }
+    #player-container, #aplayer { max-width: 720px; margin: 20px auto; display: none; }
+    video { width: 100%; border-radius: 12px; box-shadow: 0 0 12px #000; }
   </style>
 </head>
 <body>
-  <h1>🎵🎬 统一音视频播放器</h1>
-  <div class="controls">
-    <button onclick="loadAudio()">播放音频歌单</button>
-    <button onclick="loadVideo()">播放视频列表</button>
+
+  <h1>统一音视频播放器</h1>
+  <div>
+    <button onclick="loadAudio()">音频</button>
+    <button onclick="loadVideo()">视频</button>
   </div>
 
-  <ul id="playlist"></ul>
-  <div id="video-player">
-    <video id="plyr-video" class="plyr" controls></video>
+  <div id="playlist"></div>
+
+  <div id="player-container">
+    <video id="videoPlayer" controls playsinline></video>
   </div>
 
-  <!-- Plyr.js library -->
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js"></script>
-  <!-- HLS.js library for M3U8 support -->
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+  <div id="aplayer"></div>
 
   <script>
-    let player; // Plyr 播放器实例
-    let hls;    // HLS.js 实例
+    const videoEl = document.getElementById("videoPlayer");
+    const videoContainer = document.getElementById("player-container");
+    const aplayerContainer = document.getElementById("aplayer");
+    const playlistEl = document.getElementById("playlist");
 
-    const proxy = "https://music-proxy-netease.abc123abc123.workers.dev/proxy?url="; // 可留空，表示直接播放原始链接
+    const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
 
-    /**
-     * Initializes the Plyr player.
-     * This function should be called only once.
-     * 初始化 Plyr 播放器。
-     * 此函数应只被调用一次。
-     */
-    function initializePlayer() {
-      const videoElement = document.getElementById('plyr-video');
-      player = new Plyr(videoElement, {
-        autoplay: true,
-        controls: ['play', 'pause', 'rewind', 'fast-forward', 'current-time', 'duration', 'mute', 'volume', 'fullscreen', 'settings']
-      });
-      console.log("Plyr player initialized.");
-
-      // Listen for when Plyr is ready
-      // 监听 Plyr 何时准备就绪
-      player.on('ready', () => {
-        console.log('Plyr is ready.');
-      });
-
-      // Listen for errors from Plyr
-      // 监听 Plyr 的错误
-      player.on('error', (event) => {
-        console.error('Plyr error:', event);
-      });
+    // 中转URL生成函数
+    function toWorkerUrl(fullUrl) {
+      const url = new URL(fullUrl);
+      const base = url.protocol === "https:" ? "/https/" : "/http/";
+      return WORKER_URL + base + url.hostname + url.pathname + url.search;
     }
 
-    /**
-     * Handles the source for the Plyr player, specifically for M3U8 using HLS.js.
-     * 处理 Plyr 播放器的源，特别是使用 HLS.js 播放 M3U8。
-     * @param {string} url - The URL of the media. 媒体的 URL。
-     * @param {string} type - The type of media ('audio' or 'video'). 媒体类型（'audio' 或 'video'）。
-     */
-    function setPlyrSource(url, type) {
-      const videoElement = document.getElementById('plyr-video');
+    let aplayer = null;
+    let plyr = new Plyr(videoEl);
 
-      // Pause current playback to prepare for source change
-      // 暂停当前播放以准备更换源
-      player.pause();
-
-      // Always destroy previous HLS instance if it exists
-      // 如果存在先前的 HLS 实例，则始终销毁它
-      if (hls) {
-        hls.destroy();
-        hls = null;
-      }
-
-      // Clear the native video element's source and reset its state
-      // 这对于 HLS 和非 HLS 的过渡都至关重要
-      videoElement.removeAttribute('src'); // 移除原生视频元素的 src 属性
-      videoElement.load(); // 加载媒体元素以清除其内部缓冲和状态
-
-      if (url.endsWith(".m3u8") && Hls.isSupported()) {
-        // For M3U8, use HLS.js
-        // 对于 M3U8，使用 HLS.js
-        hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(videoElement); // 将 HLS 附加到原生媒体元素
-
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          console.log('HLS.js: Manifest parsed. Attempting to play.'); // HLS.js: 清单已解析。尝试播放。
-          player.play().catch(err => console.error('Error playing media after HLS manifest parsed:', err)); // 在 HLS 清单解析后播放媒体时出错
-        });
-
-        hls.on(Hls.Events.ERROR, function (event, data) {
-          console.error('HLS.js error:', data); // HLS.js 错误
-          if (data.fatal) {
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                console.error('HLS.js: fatal network error encountered, trying to recover...'); // HLS.js: 遇到致命网络错误，正在尝试恢复...
-                hls.recoverMediaError();
-                break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                console.error('HLS.js: fatal media error encountered, trying to recover...'); // HLS.js: 遇到致命媒体错误，正在尝试恢复...
-                hls.recoverMediaError();
-                break;
-              default:
-                console.error('HLS.js: unrecoverable error, destroying HLS instance.'); // HLS.js: 无法恢复的错误，正在销毁 HLS 实例。
-                hls.destroy();
-                break;
-            }
-          }
-        });
-        // Plyr will automatically pick up changes to the native video element
-        // 对于 HLS，无需在此处明确设置 player.source。
-      } else {
-        // For non-M3U8 sources, set Plyr's source directly
-        // 对于非 M3U8 源，直接设置 Plyr 的源
-        let mimeType;
-        if (url.endsWith(".mp3")) {
-            mimeType = 'audio/mpeg';
-        } else if (url.endsWith(".mp4")) {
-            mimeType = 'video/mp4';
-        } else {
-            // Fallback for other common types or if type cannot be inferred from extension
-            // 如果无法从扩展名推断类型，则回退到其他常见类型。
-            mimeType = type === 'audio' ? 'audio/mpeg' : 'video/mp4'; // 默认为常见类型
-            console.warn(`Could not determine precise MIME type for URL: ${url}. Falling back to ${mimeType}`); // 无法确定 URL 的精确 MIME 类型。回退到
-        }
-
-        player.source = {
-          type: type, // 'audio' or 'video'
-          sources: [{
-            src: url,
-            type: mimeType
-          }]
-        };
-        console.log("Setting Plyr source (non-HLS):", player.source); // 设置 Plyr 源（非 HLS）
-        player.play().catch(err => console.error('Error playing media (non-HLS):', err)); // 播放媒体时出错（非 HLS）
-      }
+    function clearAll() {
+      playlistEl.innerHTML = "";
+      videoContainer.style.display = "none";
+      aplayerContainer.style.display = "none";
+      videoEl.pause();
+      if (aplayer) aplayer.destroy();
     }
 
-    /**
-     * Loads audio playlist from 'aplayer_playlist.json'.
-     * 从 'aplayer_playlist.json' 加载音频播放列表。
-     */
     function loadAudio() {
-      // Hide video player initially when loading new list
-      // 加载新列表时，最初隐藏视频播放器
-      document.getElementById('video-player').style.display = 'none';
-      // If a player exists and is playing, pause it.
-      // 如果播放器存在且正在播放，则暂停它。
-      if (player && !player.paused) {
-          player.pause();
-      }
-
+      clearAll();
       fetch("aplayer_playlist.json")
         .then(res => res.json())
         .then(data => {
-          console.log("Loaded audio data:", data);
-          const playlistElement = document.getElementById('playlist');
-          playlistElement.innerHTML = ''; // Clear existing playlist // 清空现有播放列表
-
-          data.forEach(track => {
-            console.log("Audio item:", track);
-            // Apply proxy if needed (encoding the URL is important for proxy)
-            // 如果需要，应用代理（URL 编码对于代理很重要）
-            const mediaUrl = proxy ? proxy + encodeURIComponent(track.url) : track.url;
-
-            const listItem = document.createElement('li');
-            listItem.textContent = track.title || 'Untitled Audio'; // 未命名音频
-            listItem.onclick = () => playAudio(mediaUrl); // Pass the processed URL // 传递处理后的 URL
-            playlistElement.appendChild(listItem);
-          });
-
-          // Initialize player only if it hasn't been yet
-          // 仅在播放器尚未初始化时才初始化
-          if (!player) {
-            initializePlayer();
-          }
-        })
-        .catch(err => console.error("Failed to load audio playlist:", err)); // 加载音频播放列表失败
+          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playAudio(${index})">${item.name}</li>`).join('');
+          window.aplayerData = data;
+        });
     }
 
-    /**
-     * Plays the selected audio track.
-     * 播放选定的音频轨道。
-     * @param {string} url - The URL of the audio track. 音频轨道的 URL。
-     */
-    function playAudio(url) {
-      console.log("Playing audio:", url); // 正在播放音频
-      document.getElementById('video-player').style.display = 'block'; // Show player // 显示播放器
-      setPlyrSource(url, 'audio');
+    function playAudio(index) {
+      const data = window.aplayerData;
+      const proxyUrl = toWorkerUrl(data[index].url);  // 生成中转的URL
+      clearAll();
+      aplayerContainer.style.display = "block";
+      aplayer = new APlayer({
+        container: aplayerContainer,
+        audio: [{
+          name: data[index].name,
+          artist: data[index].artist,
+          url: proxyUrl,  // 使用中转的URL
+          cover: data[index].cover
+        }]
+      });
     }
 
-    /**
-     * Loads video playlist from 'dplayer_playlist.json'.
-     * 从 'dplayer_playlist.json' 加载视频播放列表。
-     */
     function loadVideo() {
-      // Hide video player initially when loading new list
-      // 加载新列表时，最初隐藏视频播放器
-      document.getElementById('video-player').style.display = 'none';
-      // If a player exists and is playing, pause it.
-      // 如果播放器存在且正在播放，则暂停它。
-      if (player && !player.paused) {
-          player.pause();
-      }
-
+      clearAll();
       fetch("dplayer_playlist.json")
         .then(res => res.json())
-        .then(list => {
-          console.log("Loaded video data:", list); // 已加载视频数据
-          const playlistElement = document.getElementById('playlist');
-          playlistElement.innerHTML = ''; // Clear existing playlist // 清空现有播放列表
-
-          list.forEach(video => {
-            console.log("Video item:", video); // 视频项目
-            // Apply proxy if needed (encoding the URL is important for proxy)
-            // 如果需要，应用代理（URL 编码对于代理很重要）
-            const mediaUrl = proxy ? proxy + encodeURIComponent(video.url) : video.url;
-
-            const listItem = document.createElement('li');
-            listItem.textContent = video.title || 'Untitled Video'; // 未命名视频
-            listItem.onclick = () => playVideo(mediaUrl); // Pass the processed URL // 传递处理后的 URL
-            playlistElement.appendChild(listItem);
-          });
-
-          // Initialize player only if it's not yet initialized
-          // 仅在播放器尚未初始化时才初始化
-          if (!player) {
-            initializePlayer();
-          }
-        })
-        .catch(err => console.error("Failed to load video playlist:", err)); // 加载视频播放列表失败
+        .then(data => {
+          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playVideo('${item.url}')">${item.name}</li>`).join('');
+        });
     }
 
-    /**
-     * Plays the selected video track.
-     * 播放选定的视频轨道。
-     * @param {string} url - The URL of the video track. 视频轨道的 URL。
-     */
     function playVideo(url) {
-      console.log("Playing video:", url); // 正在播放视频
-      document.getElementById('video-player').style.display = 'block'; // Show player // 显示播放器
-      setPlyrSource(url, 'video');
+      const proxyUrl = toWorkerUrl(url);  // 生成中转的URL
+      clearAll();
+      videoContainer.style.display = "block";
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(proxyUrl);  // 使用中转的URL
+        hls.attachMedia(videoEl);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
+      } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+        videoEl.src = proxyUrl;  // 使用中转的URL
+        videoEl.addEventListener('loadedmetadata', () => videoEl.play());
+      } else {
+        alert("浏览器不支持 M3U8 播放");
+      }
     }
   </script>
 </body>
