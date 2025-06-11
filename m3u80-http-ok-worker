@@ -1,0 +1,46 @@
+addEventListener("fetch", event => {
+  event.respondWith(handleRequest(event.request));
+});
+
+async function handleRequest(request) {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  // 路径必须以 /http/ 或 /https/ 开头，后面跟真实地址
+  if (pathname.startsWith("/http/")) {
+    const targetUrl = "http://" + pathname.slice(6) + url.search;
+    return fetchAndProxy(targetUrl, request);
+  } else if (pathname.startsWith("/https/")) {
+    const targetUrl = "https://" + pathname.slice(7) + url.search;
+    return fetchAndProxy(targetUrl, request);
+  } else {
+    return new Response("路径格式错误，请使用 /http/... 或 /https/...", { status: 400 });
+  }
+}
+
+async function fetchAndProxy(targetUrl, originalRequest) {
+  try {
+    const fetchRequest = new Request(targetUrl, {
+      method: originalRequest.method,
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+      }
+    });
+
+    const response = await fetch(fetchRequest);
+
+    const newHeaders = new Headers(response.headers);
+    newHeaders.set("Access-Control-Allow-Origin", "*");
+    newHeaders.delete("Content-Security-Policy");
+    newHeaders.delete("Content-Security-Policy-Report-Only");
+    newHeaders.delete("Clear-Site-Data");
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: newHeaders
+    });
+  } catch (err) {
+    return new Response("代理错误：" + err.message, { status: 502 });
+  }
+}
