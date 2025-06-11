@@ -1,90 +1,84 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>Bilibili 视频合集播放器（第三方API+CF Worker代理）</title>
-  <link
-    href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css"
-    rel="stylesheet"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bilibili 视频合集播放器</title>
+  <link href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css" rel="stylesheet" />
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 720px;
-      margin: 20px auto;
-      padding: 0 10px;
-    }
-    #playlist button {
-      margin: 5px;
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-    #loading {
-      margin-top: 10px;
-      color: #666;
-    }
+    body { font-family: sans-serif; padding: 1em; }
+    #loading { display: none; color: #888; }
+    ul { list-style: none; padding-left: 0; }
+    li { margin: 0.5em 0; cursor: pointer; color: blue; }
   </style>
 </head>
 <body>
-  <h2>Bilibili 视频合集播放器</h2>
-  <div id="playlist"></div>
-  <div id="loading" style="display:none;">加载中...</div>
-  <video id="player" playsinline controls crossorigin></video>
+  <h1>Bilibili 视频合集播放器</h1>
+  <p id="loading">加载中...</p>
+  <ul id="playlist"></ul>
+  <div id="player-container"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.polyfilled.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js"></script>
   <script>
-    // 读取环境变量 CF_WORKER_API，注意部署时PAGES的环境变量名一定要设置这个
-    const WORKER_API = window.CF_WORKER_API || 'https://your-worker-name.workers.dev/api/bilibili';
+    const WORKER_API_BASE = window.CF_WORKER_API || 'https://bili.galoo.workers.dev';
 
-    const plyrPlayer = new Plyr('#player');
-    const playlistEl = document.getElementById('playlist');
+    // 示例BV号列表，后续可换成JSON动态加载
+    const BV_LIST = [
+      'BV1oKUPYNEPn',
+      'BV1mK4y1L7k8',
+      'BV1tK4y1W7hf'
+    ];
+
     const loadingEl = document.getElementById('loading');
-
-    // 示例BV号列表
-    const bvList = ['BV1oKUPYNEPn', 'BV1mK4y1L7k8'];
+    const playlistEl = document.getElementById('playlist');
+    const playerContainer = document.getElementById('player-container');
+    let player;
 
     function createPlaylist() {
-      playlistEl.innerHTML = '';
-      bvList.forEach(bvid => {
-        const btn = document.createElement('button');
-        btn.textContent = bvid;
-        btn.onclick = () => loadVideo(bvid);
-        playlistEl.appendChild(btn);
+      BV_LIST.forEach(bv => {
+        const li = document.createElement('li');
+        li.textContent = bv;
+        li.onclick = () => loadVideo(bv);
+        playlistEl.appendChild(li);
       });
     }
 
     async function loadVideo(bvid) {
       loadingEl.style.display = 'block';
+      playerContainer.innerHTML = ''; // 清空播放器
       try {
-        const res = await fetch(`${WORKER_API}?bvid=${bvid}`);
-        if (!res.ok) throw new Error(`请求失败: ${res.status}`);
-
+        const res = await fetch(`${WORKER_API_BASE}/api/${bvid}`);
+        if (!res.ok) throw new Error(`接口返回错误 ${res.status}`);
         const data = await res.json();
 
-        if (data.code !== 0 && data.error) {
-          throw new Error(data.error || '接口返回错误');
+        if (data.code !== 0) {
+          throw new Error(`接口错误: ${data.message || JSON.stringify(data)}`);
         }
 
-        // 解析第三方接口数据，获取标题和真实播放地址
-        const title = data.data.title || '无标题';
-        // 播放地址在 data.data.playurl 或 data.data.play_url 或类似字段，注意有的接口结构不一样
-        // 这里用的是 iyk0.com 返回结构
-        const playUrl = data.data.playurl?.url || data.data.playurl || data.data.play_url || '';
+        const dash = data.data?.dash;
+        if (!dash || !dash.video || !dash.audio) {
+          throw new Error('接口返回数据格式不对');
+        }
 
-        if (!playUrl) throw new Error('未获取到有效播放地址');
+        const videoUrl = dash.video[0].baseUrl;
+        const audioUrl = dash.audio[0].baseUrl;
 
-        loadingEl.style.display = 'none';
+        // 初始化Plyr播放器，带视频和音频分轨
+        playerContainer.innerHTML = `
+          <video id="player" controls crossorigin playsinline>
+            <source src="${videoUrl}" type="video/mp4" size="${dash.video[0].width}"/>
+            <source src="${audioUrl}" type="audio/mp4"/>
+          </video>
+        `;
 
-        alert(`正在播放：${title}`);
-
-        plyrPlayer.source = {
-          type: 'video',
-          sources: [{ src: playUrl, type: 'video/mp4' }],
-          title: title,
-        };
+        if (player) {
+          player.destroy();
+        }
+        player = new Plyr('#player');
       } catch (e) {
-        loadingEl.style.display = 'none';
         alert('加载失败: ' + e.message);
+      } finally {
+        loadingEl.style.display = 'none';
       }
     }
 
