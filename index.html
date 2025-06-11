@@ -72,7 +72,7 @@
         .then(res => res.json())
         .then(data => {
           console.log("音频播放列表数据：", data);  // 打印数据
-          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playAudio(${index})">${item.TITLE}</li>`).join('');
+          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playAudio(${index})">${item.title}</li>`).join('');
           window.aplayerData = data;
         })
         .catch(error => console.error("加载音频列表失败", error));
@@ -86,7 +86,7 @@
       aplayer = new APlayer({
         container: aplayerContainer,
         audio: [{
-          name: data[index].TITLE,  // 使用正确的字段
+          name: data[index].title,  // 使用正确的字段
           url: proxyUrl,  // 使用中转的URL
         }]
       });
@@ -98,7 +98,7 @@
         .then(res => res.json())
         .then(data => {
           console.log("视频播放列表数据：", data);  // 打印数据
-          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playVideo('${item.URL}')">${item.TITLE}</li>`).join('');
+          playlistEl.innerHTML = data.map((item, index) => `<li onclick="playVideo('${item.url}')">${item.title}</li>`).join('');
         })
         .catch(error => console.error("加载视频列表失败", error));
     }
