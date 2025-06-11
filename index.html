@@ -160,7 +160,6 @@
           console.log("音频播放列表数据：", data);  // 打印数据
           playlistEl.innerHTML = data.map((item, index) => `<li onclick="playAudio(${index})">${item.title}</li>`).join('');
           window.aplayerData = data;
-          playAudio(0);  // 加载并自动播放第一个音频源
         })
         .catch(error => console.error("加载音频列表失败", error));
     }
@@ -178,7 +177,7 @@
         }]
       });
       aplayer.play();  // 自动播放
-      nowPlaying.innerHTML = `当前正在播放音频：${data[index].title}`;
+      nowPlaying.innerHTML = `当前正在播放音频：${data[index].title}`;  // 显示播放名称
     }
 
     function loadVideo() {
@@ -210,7 +209,7 @@
       } else {
         alert("浏览器不支持此格式");
       }
-      nowPlaying.innerHTML = `当前正在播放视频：${url}`;
+      nowPlaying.innerHTML = `当前正在播放视频：${url}`;  // 显示播放名称
     }
 
     // 播放自定义 URL
@@ -235,12 +234,12 @@
           }]
         });
         aplayer.play();  // 自动播放
-        nowPlaying.innerHTML = `当前正在播放音频：自定义音频`;
+        nowPlaying.innerHTML = `当前正在播放音频：自定义音频`;  // 显示播放名称
       } else if (customUrl.endsWith(".mp4") || customUrl.endsWith(".m3u8")) {
         videoContainer.style.display = "block";
         videoEl.src = proxyUrl;  // 使用中转的URL
         videoEl.play();  // 自动播放
-        nowPlaying.innerHTML = `当前正在播放视频：自定义视频`;
+        nowPlaying.innerHTML = `当前正在播放视频：自定义视频`;  // 显示播放名称
       } else {
         alert("不支持的格式");
       }
