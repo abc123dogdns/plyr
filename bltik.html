@@ -41,7 +41,7 @@
       try {
         // 第三方免费API接口示范
         // 这个接口有时会被官方封禁，建议换用稳定API或中转
-        const apiViewUrl = `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`;
+        const apiViewUrl = `https://api.iyk0.com/bilibili/video/bv/{bvid}`;
 
         // 获取视频详情
         const res = await fetch(apiViewUrl, {
