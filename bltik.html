@@ -1,88 +1,62 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bilibili 视频合集播放器</title>
-  <link href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css" />
   <style>
-    body { font-family: sans-serif; padding: 1em; }
-    #loading { display: none; color: #888; }
-    ul { list-style: none; padding-left: 0; }
-    li { margin: 0.5em 0; cursor: pointer; color: blue; }
+    body { font-family: sans-serif; padding: 20px; }
+    .video-list { margin-top: 20px; }
+    .video-item { cursor: pointer; margin-bottom: 10px; color: blue; }
   </style>
 </head>
 <body>
-  <h1>Bilibili 视频合集播放器</h1>
-  <p id="loading">加载中...</p>
-  <ul id="playlist"></ul>
-  <div id="player-container"></div>
+  <h2>🎬 Bilibili 视频合集播放器</h2>
+  <p>点击播放任意 BV 视频：</p>
+  <div class="video-list" id="videoList"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js"></script>
+  <video id="player" controls crossorigin playsinline></video>
+
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.min.js"></script>
   <script>
-    const WORKER_API_BASE = window.CF_WORKER_API || 'https://bili-tik-proxy.abc123abc123.workers.dev';
-
-    // 示例BV号列表，后续可换成JSON动态加载
-    const BV_LIST = [
-      'BV1oKUPYNEPn',
-      'BV1mK4y1L7k8',
-      'BV1tK4y1W7hf'
+    window.CF_WORKER_API = window.CF_WORKER_API || "{{CF_WORKER_API}}";
+    const videoList = [
+      "BV1oKUPYNEPn",
+      "BV1mK4y1L7k8",
+      "BV1y3411b7kf"
     ];
 
-    const loadingEl = document.getElementById('loading');
-    const playlistEl = document.getElementById('playlist');
-    const playerContainer = document.getElementById('player-container');
-    let player;
+    const listEl = document.getElementById("videoList");
+    const player = new Plyr("#player");
 
-    function createPlaylist() {
-      BV_LIST.forEach(bv => {
-        const li = document.createElement('li');
-        li.textContent = bv;
-        li.onclick = () => loadVideo(bv);
-        playlistEl.appendChild(li);
-      });
+    for (const bv of videoList) {
+      const el = document.createElement("div");
+      el.className = "video-item";
+      el.innerText = bv;
+      el.onclick = () => loadVideo(bv);
+      listEl.appendChild(el);
     }
 
     async function loadVideo(bvid) {
-      loadingEl.style.display = 'block';
-      playerContainer.innerHTML = ''; // 清空播放器
       try {
-        const res = await fetch(`${WORKER_API_BASE}/api/${bvid}`);
-        if (!res.ok) throw new Error(`接口返回错误 ${res.status}`);
-        const data = await res.json();
+        const res = await fetch(`${window.CF_WORKER_API}/api/${bvid}`);
+        const json = await res.json();
+        if (!json || !json.data || !json.data.dash) throw new Error("解析失败");
 
-        if (data.code !== 0) {
-          throw new Error(`接口错误: ${data.message || JSON.stringify(data)}`);
-        }
+        const videoUrl = json.data.dash.video[0].baseUrl;
+        const audioUrl = json.data.dash.audio[0].baseUrl;
 
-        const dash = data.data?.dash;
-        if (!dash || !dash.video || !dash.audio) {
-          throw new Error('接口返回数据格式不对');
-        }
+        // 组合成 blob (Plyr 不支持 dash/mpd)
+        player.source = {
+          type: 'video',
+          sources: [{ src: videoUrl, type: 'video/mp4' }]
+        };
 
-        const videoUrl = dash.video[0].baseUrl;
-        const audioUrl = dash.audio[0].baseUrl;
-
-        // 初始化Plyr播放器，带视频和音频分轨
-        playerContainer.innerHTML = `
-          <video id="player" controls crossorigin playsinline>
-            <source src="${videoUrl}" type="video/mp4" size="${dash.video[0].width}"/>
-            <source src="${audioUrl}" type="audio/mp4"/>
-          </video>
-        `;
-
-        if (player) {
-          player.destroy();
-        }
-        player = new Plyr('#player');
       } catch (e) {
-        alert('加载失败: ' + e.message);
-      } finally {
-        loadingEl.style.display = 'none';
+        alert("加载失败：" + e.message);
+        console.error(e);
       }
     }
-
-    createPlaylist();
   </script>
 </body>
 </html>
