@@ -36,7 +36,7 @@
   <script>
     // 只需修改这里两个变量
     const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
-    const ORIGINAL_M3U8 = "https://0472.org/hls/cgtn.m3u8";  // 你的原始 M3U8 地址（HTTP 或 HTTPS 均可）
+    const ORIGINAL_M3U8 = "http://sk.cri.cn/am846.m3u8";  // 你的原始 M3U8 地址（HTTP 或 HTTPS 均可）
 
     const video = document.getElementById('player');
     const sourceUrl = `${WORKER_URL}/?url=${encodeURIComponent(ORIGINAL_M3U8)}`;
