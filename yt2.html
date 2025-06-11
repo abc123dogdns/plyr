@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Plyr + YouTube div</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css" />
+  <style>
+    body { max-width: 720px; margin: 2rem auto; padding: 1rem; font-family: sans-serif; }
+  </style>
+</head>
+<body>
+
+  <h2>模式二：div 嵌入</h2>
+
+  <div id="player" data-plyr-provider="youtube" data-plyr-embed-id="bTqVqk7FSmY"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.polyfilled.js"></script>
+  <script>
+    const player = new Plyr('#player');
+  </script>
+
+</body>
+</html>
