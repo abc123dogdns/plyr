@@ -1,0 +1,22 @@
+[
+  {
+    "url": "http://hls.cntv.myhwcdn.cn/asp/hls/1200/0303000a/3/default/2bb3f59f9f08459d809fa70a314f076b/1200.m3u8",
+    "poster": "https://example.com/video-cover.jpg",
+    "title": "我和我的祖国M3U8"
+  },
+  {
+    "url": "https://txmov2.a.kwimgs.com/bs3/video-hls/5251197255879398624_hlshd15.m3u8",
+    "poster": "https://example.com/video-cover.jpg",
+    "title": "春晚2023"
+  },
+  {
+    "url": "http://117.148.187.46/hwltc.tv.cdn.zj.chinamobile.com/PLTV/88888888/224/3221230877/01.m3u8?fmt=ts2hls",
+    "poster": "https://example.com/video-cover.jpg",
+    "title": "CCTV13-M3U8"
+  },  
+  {
+    "url": "https://vdse.bdstatic.com//1d83dfc2411243e5b9f44462e1e55ab3.mp4?authorization=bce-auth-v1%2F40f207e648424f47b2e3dfbb1014b1a5%2F2019-12-14T02%3A12%3A40Z%2F-1%2Fhost%2F4739737cd8b21cbdb307a5d008abe88a61afce23616c55f2a8fae768fc2b6764",
+    "poster": "https://example.com/video-cover.jpg",
+    "title": "牧马城市MP4"
+  }  
+]
