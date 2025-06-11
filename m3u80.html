@@ -1,54 +1,64 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <title>M3U8 播放器（Plyr + Hls.js + Worker）</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PLYR M3U8 播放示例</title>
+
+  <!-- Plyr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
+
+  <!-- HLS.js -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.2/dist/hls.min.js"></script>
+
+  <!-- Plyr.js -->
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
+
   <style>
     body {
-      background-color: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
+      background: #111;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
     }
-    video {
-      width: 80vw;
-      max-width: 960px;
-      border: 2px solid #444;
-      border-radius: 12px;
+    #player {
+      max-width: 720px;
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
-  <h2>通过 Cloudflare Worker 播放 HTTP M3U8</h2>
-  <video id="player" controls></video>
+  <h1>PLYR M3U8 播放示例</h1>
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.min.js"></script>
+  <video id="player" playsinline controls></video>
+
   <script>
-    const video = document.getElementById('player');
+    // 只需修改这里两个变量
+    const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
+    const ORIGINAL_M3U8 = "https://0472.org/hls/cgtn.m3u8";  // 你的原始 M3U8 地址（HTTP 或 HTTPS 均可）
 
-    // 替换为你的 Worker 中转后的 HTTPS 地址
-    const source = "https://m3u8-http-proxy.abc123abc123.workers.dev/?url=https://0472.org/hls/cgtn.m3u8";
+    const video = document.getElementById('player');
+    const sourceUrl = `${WORKER_URL}/?url=${encodeURIComponent(ORIGINAL_M3U8)}`;
 
     if (Hls.isSupported()) {
       const hls = new Hls();
-      hls.loadSource(source);
+      hls.loadSource(sourceUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         video.play();
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = source;
+      // 兼容 Safari 原生播放
+      video.src = sourceUrl;
       video.addEventListener('loadedmetadata', () => {
         video.play();
       });
+    } else {
+      alert('当前浏览器不支持播放 M3U8 视频。');
     }
 
+    // 初始化 Plyr
     const player = new Plyr(video);
   </script>
 </body>
