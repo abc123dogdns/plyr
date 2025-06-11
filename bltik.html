@@ -18,12 +18,12 @@
   <div>
     <h2>哔哩哔哩示例</h2>
     <ul id="bili-list">
-      <li data-src="https://bili-tik-proxy.abc123abc123.workers.dev/?url=https://upos-sz-mirrorcos.bilivideo.com/upgcxcode/30/11/140187130/140187130-1-30080.m4s">【鬼畜】复读机.mp4</li>
+      <li data-bvid="BV1x5411F7mD" data-cid="140187130">【鬼畜】复读机</li>
     </ul>
 
     <h2>抖音示例</h2>
     <ul id="douyin-list">
-      <li data-src="https://bili-tik-proxy.abc123abc123.workers.dev/?url=https://v26-dy.ixigua.com/abc12345/video/tos/cn/tos-cn-ve-15c001-alinc2/o12345abcde/?a=6383">小姐姐跳舞.mp4</li>
+      <li data-url="https://v26-dy.ixigua.com/abc12345/video/tos/cn/tos-cn-ve-15c001-alinc2/o12345abcde/?a=6383">小姐姐跳舞</li>
     </ul>
   </div>
 
@@ -32,20 +32,50 @@
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.min.js"></script>
   <script>
     const player = new Plyr('#player');
-    function bindList(id) {
-      document.querySelectorAll(`#${id} li`).forEach(el => {
+
+    async function getBilibiliUrl(bvid, cid) {
+      const api = `https://api.bilibili.com/x/player/playurl?bvid=${bvid}&cid=${cid}&qn=80&fnval=1`;
+      const res = await fetch(api);
+      const json = await res.json();
+      return json.data?.durl?.[0]?.url || null;
+    }
+
+    function bindBiliList() {
+      document.querySelectorAll('#bili-list li').forEach(el => {
+        el.addEventListener('click', async () => {
+          const bvid = el.getAttribute('data-bvid');
+          const cid = el.getAttribute('data-cid');
+          const realUrl = await getBilibiliUrl(bvid, cid);
+          if (realUrl) {
+            const proxyUrl = `https://bili-tik-proxy.abc123abc123.workers.dev/?url=${encodeURIComponent(realUrl)}`;
+            player.source = {
+              type: 'video',
+              sources: [{ src: proxyUrl, type: 'video/mp4' }]
+            };
+            player.play();
+          } else {
+            alert("获取 B 站视频地址失败");
+          }
+        });
+      });
+    }
+
+    function bindDouyinList() {
+      document.querySelectorAll('#douyin-list li').forEach(el => {
         el.addEventListener('click', () => {
-          const src = el.getAttribute('data-src');
+          const realUrl = el.getAttribute('data-url');
+          const proxyUrl = `https://bili-tik-proxy.abc123abc123.workers.dev/?url=${encodeURIComponent(realUrl)}`;
           player.source = {
             type: 'video',
-            sources: [{ src, type: 'video/mp4' }]
+            sources: [{ src: proxyUrl, type: 'video/mp4' }]
           };
           player.play();
         });
       });
     }
-    bindList('bili-list');
-    bindList('douyin-list');
+
+    bindBiliList();
+    bindDouyinList();
   </script>
 </body>
 </html>
