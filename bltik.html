@@ -3,79 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>哔哩 & 抖音 播放器</title>
+  <title>哔哩哔哩 多集视频播放器</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css" />
   <style>
     body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
-    h2 { margin-top: 2em; }
-    ul { list-style: none; padding: 0; }
+    h1, h2 { text-align: center; }
+    ul { list-style: none; padding: 0; max-width: 720px; margin: auto; }
     li { margin: 0.5em 0; cursor: pointer; color: #007bff; text-decoration: underline; }
-    .plyr__video-embed { width: 100%; max-width: 720px; margin: 1em auto; }
+    .plyr__video-embed, video { width: 100%; max-width: 720px; margin: 2em auto; display: block; }
   </style>
 </head>
 <body>
-  <h1>在线视频播放</h1>
-  <div>
-    <h2>哔哩哔哩示例</h2>
-    <ul id="bili-list">
-      <li data-bvid="BV1x5411F7mD" data-cid="140187130">【鬼畜】复读机</li>
-    </ul>
-
-    <h2>抖音示例</h2>
-    <ul id="douyin-list">
-      <li data-url="https://v26-dy.ixigua.com/abc12345/video/tos/cn/tos-cn-ve-15c001-alinc2/o12345abcde/?a=6383">小姐姐跳舞</li>
-    </ul>
-  </div>
+  <h1>哔哩哔哩 视频合集播放器</h1>
+  <h2 id="video-title">加载中...</h2>
+  <ul id="episode-list"></ul>
 
   <video id="player" playsinline controls></video>
 
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.min.js"></script>
   <script>
+    const bvid = "BV1oKUPYNEPn"; // 可更换为任意 BV 号
     const player = new Plyr('#player');
 
-    async function getBilibiliUrl(bvid, cid) {
+    async function fetchVideoPages(bvid) {
+      const api = `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`;
+      const res = await fetch(api);
+      const json = await res.json();
+      return json.data?.pages || [];
+    }
+
+    async function fetchPlayUrl(bvid, cid) {
       const api = `https://api.bilibili.com/x/player/playurl?bvid=${bvid}&cid=${cid}&qn=80&fnval=1`;
       const res = await fetch(api);
       const json = await res.json();
       return json.data?.durl?.[0]?.url || null;
     }
 
-    function bindBiliList() {
-      document.querySelectorAll('#bili-list li').forEach(el => {
-        el.addEventListener('click', async () => {
-          const bvid = el.getAttribute('data-bvid');
-          const cid = el.getAttribute('data-cid');
-          const realUrl = await getBilibiliUrl(bvid, cid);
-          if (realUrl) {
-            const proxyUrl = `https://bili-tik-proxy.abc123abc123.workers.dev/?url=${encodeURIComponent(realUrl)}`;
-            player.source = {
-              type: 'video',
-              sources: [{ src: proxyUrl, type: 'video/mp4' }]
-            };
-            player.play();
-          } else {
-            alert("获取 B 站视频地址失败");
-          }
-        });
-      });
+    async function loadAndPlay(cid, part) {
+      document.getElementById('video-title').textContent = part;
+      const url = await fetchPlayUrl(bvid, cid);
+      if (!url) {
+        alert("获取播放地址失败");
+        return;
+      }
+      player.source = {
+        type: 'video',
+        sources: [{ src: url, type: 'video/mp4' }]
+      };
+      player.play();
     }
 
-    function bindDouyinList() {
-      document.querySelectorAll('#douyin-list li').forEach(el => {
-        el.addEventListener('click', () => {
-          const realUrl = el.getAttribute('data-url');
-          const proxyUrl = `https://bili-tik-proxy.abc123abc123.workers.dev/?url=${encodeURIComponent(realUrl)}`;
-          player.source = {
-            type: 'video',
-            sources: [{ src: proxyUrl, type: 'video/mp4' }]
-          };
-          player.play();
-        });
+    async function init() {
+      const pages = await fetchVideoPages(bvid);
+      const list = document.getElementById('episode-list');
+      list.innerHTML = '';
+      pages.forEach((page, index) => {
+        const li = document.createElement('li');
+        li.textContent = `P${index + 1} - ${page.part}`;
+        li.onclick = () => loadAndPlay(page.cid, page.part);
+        list.appendChild(li);
       });
+      if (pages.length > 0) loadAndPlay(pages[0].cid, pages[0].part);
     }
 
-    bindBiliList();
-    bindDouyinList();
+    init();
   </script>
 </body>
 </html>
