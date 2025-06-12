@@ -2,18 +2,13 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>统一播放器</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>统一播放器</title>
   
   <!-- Plyr 样式 & 脚本 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.2"></script>
   
-  <!-- APlayer 样式 & 脚本 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script>
-
   <style>
     body { 
       background: #111; 
@@ -44,7 +39,7 @@
     li:hover { 
       background: #333; 
     }
-    #player-container, #aplayer { 
+    #player-container { 
       max-width: 100%; 
       margin: 20px auto; 
       display: none; 
@@ -58,56 +53,11 @@
     .plyr__control--volume { 
       display: none !important; 
     }
-    .aplayer-control { 
-      display: none !important; 
-    }  /* APlayer 去除音量调节 */
-    
-    /* 当前正在播放提示 */
-    #nowPlaying {
-      background-color: #333;
-      color: #fff;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      font-size: 18px;
-    }
-
-    /* 输入框与按钮横排 */
-    .controls-row {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .controls-row input {
-      padding: 10px;
-      font-size: 16px;
-      width: 80%;
-    }
-    .controls-row button {
-      margin-left: 10px;
-    }
-
-    /* 针对小屏设备的调整 */
-    @media (max-width: 480px) {
-      video, .aplayer {
-        width: 100% !important; /* 确保播放器宽度适配小屏 */
-      }
-    }
   </style>
 </head>
 <body>
 
   <h1>统一音视频播放器</h1>
-  
-  <!-- 当前正在播放提示 -->
-  <div id="nowPlaying"></div>
-
-  <!-- 自定义输入框和播放按钮 -->
-  <div class="controls-row">
-    <input id="customUrlInput" type="text" placeholder="输入自定义音视频源 URL">
-    <button onclick="playCustomUrl()">播放</button>
-  </div>
 
   <!-- 音频与视频切换按钮 -->
   <div>
@@ -121,15 +71,10 @@
     <video id="videoPlayer" controls playsinline></video>
   </div>
 
-  <div id="aplayer"></div>
-
   <script>
     const videoEl = document.getElementById("videoPlayer");
     const videoContainer = document.getElementById("player-container");
-    const aplayerContainer = document.getElementById("aplayer");
     const playlistEl = document.getElementById("playlist");
-    const customUrlInput = document.getElementById("customUrlInput");
-    const nowPlaying = document.getElementById("nowPlaying");
 
     const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
 
@@ -140,16 +85,10 @@
       return WORKER_URL + base + url.hostname + url.pathname + url.search;
     }
 
-    let aplayer = null;
-    let plyr = new Plyr(videoEl);
-
     function clearAll() {
       playlistEl.innerHTML = "";
       videoContainer.style.display = "none";
-      aplayerContainer.style.display = "none";
       videoEl.pause();
-      if (aplayer) aplayer.destroy();
-      nowPlaying.innerHTML = '';  // 清空正在播放提示
     }
 
     function loadAudio() {
@@ -168,16 +107,9 @@
       const data = window.aplayerData;
       const proxyUrl = toWorkerUrl(data[index].url);  // 使用正确的字段
       clearAll();
-      aplayerContainer.style.display = "block";
-      aplayer = new APlayer({
-        container: aplayerContainer,
-        audio: [{
-          name: data[index].title,  // 使用正确的字段
-          url: proxyUrl,  // 使用中转的URL
-        }]
-      });
-      aplayer.play();  // 自动播放
-      nowPlaying.innerHTML = `当前正在播放音频：${data[index].title}`;  // 显示播放名称
+      videoContainer.style.display = "block";
+      videoEl.src = proxyUrl;
+      videoEl.play();  // 自动播放
     }
 
     function loadVideo() {
@@ -195,54 +127,8 @@
       const proxyUrl = toWorkerUrl(url);  // 生成中转的URL
       clearAll();
       videoContainer.style.display = "block";
-
-      if (url.endsWith(".mp4")) {
-        // 如果是 .mp4 格式，直接通过 Plyr 播放
-        videoEl.src = proxyUrl;  // 使用中转的URL
-        videoEl.play();  // 自动播放
-      } else if (Hls.isSupported() && url.endsWith(".m3u8")) {
-        // 如果是 HLS 格式，使用 Hls.js 播放
-        const hls = new Hls();
-        hls.loadSource(proxyUrl);  // 使用中转的URL
-        hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
-      } else {
-        alert("浏览器不支持此格式");
-      }
-      nowPlaying.innerHTML = `当前正在播放视频：${url}`;  // 显示播放名称
-    }
-
-    // 播放自定义 URL
-    function playCustomUrl() {
-      const customUrl = customUrlInput.value.trim();
-      if (!customUrl) {
-        alert("请输入有效的音视频源 URL");
-        return;
-      }
-
-      const proxyUrl = toWorkerUrl(customUrl);  // 使用中转的URL
-      clearAll();
-
-      // 判断是否是音频或视频格式
-      if (customUrl.endsWith(".mp3") || customUrl.endsWith(".m4a") || customUrl.endsWith(".ogg")) {
-        aplayerContainer.style.display = "block";
-        aplayer = new APlayer({
-          container: aplayerContainer,
-          audio: [{
-            name: "自定义音频",  // 可以修改为更适合的名称
-            url: proxyUrl,  // 使用中转的URL
-          }]
-        });
-        aplayer.play();  // 自动播放
-        nowPlaying.innerHTML = `当前正在播放音频：自定义音频`;  // 显示播放名称
-      } else if (customUrl.endsWith(".mp4") || customUrl.endsWith(".m3u8")) {
-        videoContainer.style.display = "block";
-        videoEl.src = proxyUrl;  // 使用中转的URL
-        videoEl.play();  // 自动播放
-        nowPlaying.innerHTML = `当前正在播放视频：自定义视频`;  // 显示播放名称
-      } else {
-        alert("不支持此格式");
-      }
+      videoEl.src = proxyUrl;  // 使用中转的URL
+      videoEl.play();  // 自动播放
     }
   </script>
 
