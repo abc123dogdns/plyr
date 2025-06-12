@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>统一播放器</title>
+  <title>统一音视频播放器</title>
   
   <!-- Plyr 样式 & 脚本 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
@@ -49,17 +49,12 @@
       border-radius: 12px; 
       box-shadow: 0 0 12px #000; 
     }
-    /* 去掉音量控制 */
-    .plyr__control--volume { 
-      display: none !important; 
-    }
   </style>
 </head>
 <body>
 
   <h1>统一音视频播放器</h1>
 
-  <!-- 音频与视频切换按钮 -->
   <div>
     <button onclick="loadAudio()">音频</button>
     <button onclick="loadVideo()">视频</button>
