@@ -2,96 +2,90 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>统一音视频播放器</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8"></script>
+  <title>音视频播放器</title>
+  <link href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css" rel="stylesheet">
   <style>
-    body {
-      background: #111;
-      color: #fff;
-      font-family: sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    video {
-      max-width: 720px;
-      width: 100%;
-      margin: auto;
-      border-radius: 12px;
-      box-shadow: 0 0 12px #000;
-    }
-    #nowPlaying {
-      background-color: #333;
-      color: #fff;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      font-size: 18px;
-    }
+    body { font-family: Arial, sans-serif; }
+    #playlist { margin: 20px; }
+    #playlist button { padding: 10px; font-size: 16px; margin: 5px; }
   </style>
 </head>
 <body>
 
-  <h1>统一音视频播放器</h1>
-
-  <div id="nowPlaying"></div>
-
-  <div class="controls-row">
-    <input id="customUrlInput" type="text" placeholder="输入自定义音视频源 URL">
-    <button onclick="playCustomUrl()">播放</button>
+  <h1>音视频播放器</h1>
+  <div id="playlist">
+    <h3>音频列表</h3>
+    <!-- 音频列表 -->
+    <div id="audio-list"></div>
+    <h3>视频列表</h3>
+    <!-- 视频列表 -->
+    <div id="video-list"></div>
   </div>
 
   <div id="player-container">
-    <video id="videoPlayer" controls playsinline></video>
+    <video id="player" controls class="plyr">
+      <source src="" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js"></script>
   <script>
-    const videoEl = document.getElementById("videoPlayer");
-    const nowPlaying = document.getElementById("nowPlaying");
+    // 播放器初始化
+    const player = new Plyr('#player', { autoplay: true });
 
-    const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
-
-    // 转换为中转 URL
-    function toWorkerUrl(fullUrl) {
-      const url = new URL(fullUrl);
-      const base = url.protocol === "https:" ? "/https/" : "/http/";
-      return WORKER_URL + base + url.hostname + url.pathname + url.search;
+    // 获取音视频列表
+    async function getMediaList(type) {
+      const res = await fetch(`https://m3u8-http-proxy.abc123abc123.workers.dev/${type}`);
+      const data = await res.json();
+      return data;
     }
 
-    // 播放自定义 URL
-    function playCustomUrl() {
-      const customUrl = document.getElementById("customUrlInput").value.trim();
-      if (!customUrl) {
-        alert("请输入有效的音视频源 URL");
-        return;
-      }
-
-      const proxyUrl = toWorkerUrl(customUrl);  // 使用中转的URL
-
-      // 处理 MP4 播放
-      if (customUrl.endsWith(".mp4")) {
-        videoEl.src = proxyUrl;  // 使用中转的 URL
-        videoEl.play();  // 自动播放
-        nowPlaying.innerHTML = `当前正在播放视频：${customUrl}`;  // 显示播放名称
-      }
-      // 处理 M3U8 播放
-      else if (Hls.isSupported() && customUrl.endsWith(".m3u8")) {
-        const hls = new Hls();
-        hls.loadSource(proxyUrl);  // 使用中转的 URL
-        hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          videoEl.play();  // 自动播放
-        });
-        nowPlaying.innerHTML = `当前正在播放视频：${customUrl}`;  // 显示播放名称
-      } else {
-        alert("不支持的格式");
-      }
+    // 加载音频列表
+    async function loadAudioList() {
+      const audioList = await getMediaList('aplayer_playlist.json');
+      const audioListContainer = document.getElementById('audio-list');
+      audioList.forEach(item => {
+        const button = document.createElement('button');
+        button.textContent = item.title;
+        button.onclick = () => loadMedia('audio', item.url);
+        audioListContainer.appendChild(button);
+      });
     }
 
-    // 初始化播放器
-    const player = new Plyr(videoEl);
+    // 加载视频列表
+    async function loadVideoList() {
+      const videoList = await getMediaList('dplayer_playlist.json');
+      const videoListContainer = document.getElementById('video-list');
+      videoList.forEach(item => {
+        const button = document.createElement('button');
+        button.textContent = item.title;
+        button.onclick = () => loadMedia('video', item.url);
+        videoListContainer.appendChild(button);
+      });
+    }
+
+    // 加载音视频
+    function loadMedia(type, url) {
+      const mediaUrl = `https://your-worker-url.workers.dev/proxy${url}`;
+      const mediaElement = type === 'audio' ? '#player' : '#player';
+      document.querySelector(mediaElement).querySelector('source').src = mediaUrl;
+      player.source = {
+        type: 'video',
+        sources: [
+          {
+            src: mediaUrl,
+            type: 'video/mp4'
+          }
+        ]
+      };
+      player.play();
+    }
+
+    // 初始化音视频列表
+    loadAudioList();
+    loadVideoList();
   </script>
 
 </body>
