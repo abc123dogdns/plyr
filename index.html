@@ -2,90 +2,35 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>音视频播放器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>统一音视频播放器</title>
   <link href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css" rel="stylesheet">
-  <style>
-    body { font-family: Arial, sans-serif; }
-    #playlist { margin: 20px; }
-    #playlist button { padding: 10px; font-size: 16px; margin: 5px; }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.js"></script>
 </head>
 <body>
 
-  <h1>音视频播放器</h1>
-  <div id="playlist">
-    <h3>音频列表</h3>
-    <!-- 音频列表 -->
-    <div id="audio-list"></div>
-    <h3>视频列表</h3>
-    <!-- 视频列表 -->
-    <div id="video-list"></div>
-  </div>
-
+  <!-- 播放器容器 -->
   <div id="player-container">
-    <video id="player" controls class="plyr">
-      <source src="" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
+    <audio id="audio-player" controls>
+      <source id="audio-source" type="audio/mpeg">
+    </audio>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.min.js"></script>
   <script>
-    // 播放器初始化
-    const player = new Plyr('#player', { autoplay: true });
+    // 获取音频列表的路径，假设Worker路径为 /audio
+    fetch('https://m3u8-http-proxy.abc123abc123.workers.dev/audio/')
+      .then(response => response.json())
+      .then(data => {
+        // 动态加载第一个音频源
+        const audioSource = document.getElementById('audio-source');
+        audioSource.src = data[0].url; // 获取第一个音频的 URL
+        audioSource.title = data[0].title; // 获取标题
 
-    // 获取音视频列表
-    async function getMediaList(type) {
-      const res = await fetch(`https://m3u8-http-proxy.abc123abc123.workers.dev/${type}`);
-      const data = await res.json();
-      return data;
-    }
-
-    // 加载音频列表
-    async function loadAudioList() {
-      const audioList = await getMediaList('aplayer_playlist.json');
-      const audioListContainer = document.getElementById('audio-list');
-      audioList.forEach(item => {
-        const button = document.createElement('button');
-        button.textContent = item.title;
-        button.onclick = () => loadMedia('audio', item.url);
-        audioListContainer.appendChild(button);
-      });
-    }
-
-    // 加载视频列表
-    async function loadVideoList() {
-      const videoList = await getMediaList('dplayer_playlist.json');
-      const videoListContainer = document.getElementById('video-list');
-      videoList.forEach(item => {
-        const button = document.createElement('button');
-        button.textContent = item.title;
-        button.onclick = () => loadMedia('video', item.url);
-        videoListContainer.appendChild(button);
-      });
-    }
-
-    // 加载音视频
-    function loadMedia(type, url) {
-      const mediaUrl = `https://your-worker-url.workers.dev/proxy${url}`;
-      const mediaElement = type === 'audio' ? '#player' : '#player';
-      document.querySelector(mediaElement).querySelector('source').src = mediaUrl;
-      player.source = {
-        type: 'video',
-        sources: [
-          {
-            src: mediaUrl,
-            type: 'video/mp4'
-          }
-        ]
-      };
-      player.play();
-    }
-
-    // 初始化音视频列表
-    loadAudioList();
-    loadVideoList();
+        // 初始化 Plyr 播放器
+        const player = new Plyr('#audio-player');
+        player.play(); // 自动播放
+      })
+      .catch(error => console.error('获取音频列表失败', error));
   </script>
 
 </body>
