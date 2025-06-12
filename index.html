@@ -4,23 +4,23 @@
   <meta charset="UTF-8">
   <title>统一音视频播放器</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.2"></script>
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8"></script>
-
   <style>
-    body { 
-      background: #111; 
-      color: #fff; 
-      font-family: sans-serif; 
-      text-align: center; 
-      padding: 20px; 
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
     }
-    video { 
-      width: 100%; 
-      border-radius: 12px; 
-      box-shadow: 0 0 12px #000; 
+    video {
+      max-width: 720px;
+      width: 100%;
+      margin: auto;
+      border-radius: 12px;
+      box-shadow: 0 0 12px #000;
     }
     #nowPlaying {
       background-color: #333;
@@ -29,20 +29,6 @@
       margin-top: 10px;
       border-radius: 8px;
       font-size: 18px;
-    }
-    .controls-row { 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      margin-bottom: 20px; 
-    }
-    .controls-row input { 
-      padding: 10px; 
-      font-size: 16px; 
-      width: 80%; 
-    }
-    .controls-row button { 
-      margin-left: 10px; 
     }
   </style>
 </head>
@@ -67,12 +53,14 @@
 
     const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
 
+    // 转换为中转 URL
     function toWorkerUrl(fullUrl) {
       const url = new URL(fullUrl);
       const base = url.protocol === "https:" ? "/https/" : "/http/";
       return WORKER_URL + base + url.hostname + url.pathname + url.search;
     }
 
+    // 播放自定义 URL
     function playCustomUrl() {
       const customUrl = document.getElementById("customUrlInput").value.trim();
       if (!customUrl) {
@@ -82,16 +70,16 @@
 
       const proxyUrl = toWorkerUrl(customUrl);  // 使用中转的URL
 
-      // 播放 MP4 格式
+      // 处理 MP4 播放
       if (customUrl.endsWith(".mp4")) {
-        videoEl.src = proxyUrl;  // 使用中转的URL
+        videoEl.src = proxyUrl;  // 使用中转的 URL
         videoEl.play();  // 自动播放
         nowPlaying.innerHTML = `当前正在播放视频：${customUrl}`;  // 显示播放名称
       }
-      // 播放 M3U8 格式
+      // 处理 M3U8 播放
       else if (Hls.isSupported() && customUrl.endsWith(".m3u8")) {
         const hls = new Hls();
-        hls.loadSource(proxyUrl);  // 使用中转的URL
+        hls.loadSource(proxyUrl);  // 使用中转的 URL
         hls.attachMedia(videoEl);
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
           videoEl.play();  // 自动播放
@@ -101,6 +89,9 @@
         alert("不支持的格式");
       }
     }
+
+    // 初始化播放器
+    const player = new Plyr(videoEl);
   </script>
 
 </body>
