@@ -99,6 +99,9 @@
 <body>
 
   <h1>统一音视频播放器</h1>
+  
+  <!-- 当前正在播放提示 -->
+  <div id="nowPlaying"></div>
 
   <!-- 自定义输入框和播放按钮 -->
   <div class="controls-row">
@@ -114,9 +117,6 @@
 
   <div id="playlist"></div>
 
-  <!-- 当前正在播放提示 -->
-  <div id="nowPlaying"></div>
-  
   <div id="player-container">
     <video id="videoPlayer" controls playsinline></video>
   </div>
@@ -234,19 +234,16 @@
           }]
         });
         aplayer.play();  // 自动播放
-        nowPlaying.innerHTML = `当前播放：自定义音频`;  // 显示播放名称
+        nowPlaying.innerHTML = `当前正在播放音频：自定义音频`;  // 显示播放名称
       } else if (customUrl.endsWith(".mp4") || customUrl.endsWith(".m3u8")) {
         videoContainer.style.display = "block";
         videoEl.src = proxyUrl;  // 使用中转的URL
         videoEl.play();  // 自动播放
-        nowPlaying.innerHTML = `当前播放：自定义视频`;  // 显示播放名称
+        nowPlaying.innerHTML = `当前正在播放视频：自定义视频`;  // 显示播放名称
       } else {
-        alert("不支持的格式");
+        alert("不支持此格式");
       }
     }
-
-    // 默认加载音频
-    loadAudio();
   </script>
 
 </body>
