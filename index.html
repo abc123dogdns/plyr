@@ -2,137 +2,52 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>统一音视频播放器</title>
-  <link href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.js"></script>
-</head>
-<body>
-
-  <!-- 播放器容器 -->
-  <div id="player-container">
-    <audio id="audio-player" controls>
-      <source id="audio-source" type="audio/mpeg">
-    </audio><!DOCTYPE html>
-<html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>统一音视频播放器</title>
-  <link href="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.2/dist/plyr.js"></script>
+  <title>PLYR 播放器 (M3U8 支持)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-    .player-container {
-      margin: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    #player-container {
-      width: 80%;
-      margin-bottom: 20px;
-    }
-    #controls {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    #controls button {
-      padding: 10px 20px;
-      margin: 0 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
+    body { background: #111; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
+    video { max-width: 720px; width: 100%; margin: auto; border-radius: 12px; box-shadow: 0 0 12px #000; }
   </style>
 </head>
 <body>
-
-  <!-- 播放器切换按钮 -->
-  <div id="controls">
-    <button id="audio-btn">音频</button>
-    <button id="video-btn">视频</button>
-  </div>
-
-  <!-- 播放器容器 -->
-  <div class="player-container" id="player-container">
-    <!-- 音频播放器 -->
-    <audio id="audio-player" controls>
-      <source id="audio-source" type="audio/mpeg">
-    </audio>
-
-    <!-- 视频播放器 -->
-    <video id="video-player" controls style="display: none;">
-      <source id="video-source" type="video/mp4">
-    </video>
-  </div>
+  <h1>M3U8 播放测试</h1>
+  <video id="player" controls playsinline></video>
 
   <script>
-    // 获取音视频列表的路径，假设Worker路径为 /audio 和 /video
-    let currentType = 'audio';  // 默认播放音频
+    // 🔧 改这里两个变量即可：
+    const WORKER_URL = "https://m3u8-http-proxy.abc123abc123.workers.dev";  // 你的 Cloudflare Worker 地址
+    const ORIGINAL_M3U8 = "http://117.148.187.46/hwltc.tv.cdn.zj.chinamobile.com/PLTV/88888888/224/3221230877/01.m3u8";  // 你的 M3U8 地址（http 或 https 均可）
 
-    // 切换音频/视频按钮功能
-    document.getElementById('audio-btn').addEventListener('click', () => loadPlaylist('audio'));
-    document.getElementById('video-btn').addEventListener('click', () => loadPlaylist('video'));
-
-    // 加载播放列表
-    function loadPlaylist(type) {
-      currentType = type;
-      const playerContainer = document.getElementById('player-container');
-      
-      // 隐藏视频播放器或音频播放器
-      if (currentType === 'audio') {
-        document.getElementById('audio-player').style.display = 'block';
-        document.getElementById('video-player').style.display = 'none';
-      } else {
-        document.getElementById('audio-player').style.display = 'none';
-        document.getElementById('video-player').style.display = 'block';
-      }
-
-      // 获取播放列表
-      fetch(`https://m3u8-http-proxy.abc123abc123.workers.dev/${currentType}/`)
-        .then(response => response.json())
-  .then(data => {
-    // 设置播放器源
-    const player = currentType === 'audio' ? document.getElementById('audio-player') : document.getElementById('video-player');
-    const source = currentType === 'audio' ? document.getElementById('audio-source') : document.getElementById('video-source');
-
-    // 加载第一个播放源
-    source.src = data[0].url; // 获取第一个源的 URL
-    source.title = data[0].title; // 获取标题
-    player.load();  // 重新加载播放器
-    player.play();  // 自动播放
-  })
-  .catch(error => console.error('获取播放列表失败', error));
+    // === 自动处理参数 ===
+    function toWorkerUrl(fullUrl) {
+      const url = new URL(fullUrl);
+      const base = url.protocol === "https:" ? "/https/" : "/http/";
+      return WORKER_URL + base + url.hostname + url.pathname + url.search;
     }
 
-    // 默认加载音频
-    loadPlaylist('audio');
+    const proxyM3u8 = toWorkerUrl(ORIGINAL_M3U8);
+    const video = document.getElementById("player");
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(proxyM3u8);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play();
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = proxyM3u8;
+      video.addEventListener('loadedmetadata', () => {
+        video.play();
+      });
+    } else {
+      alert("当前浏览器不支持 M3U8 播放");
+    }
+
+    const player = new Plyr(video);
   </script>
-
-</body>
-</html>
-
-  </div>
-
-  <script>
-    // 获取音频列表的路径，假设Worker路径为 /audio
-    fetch('https://m3u8-http-proxy.abc123abc123.workers.dev/audio/')
-      .then(response => response.json())
-      .then(data => {
-        // 动态加载第一个音频源
-        const audioSource = document.getElementById('audio-source');
-        audioSource.src = data[0].url; // 获取第一个音频的 URL
-        audioSource.title = data[0].title; // 获取标题
-
-        // 初始化 Plyr 播放器
-        const player = new Plyr('#audio-player');
-        player.play(); // 自动播放
-      })
-      .catch(error => console.error('获取音频列表失败', error));
-  </script>
-
 </body>
 </html>
