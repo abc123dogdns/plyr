@@ -94,18 +94,18 @@
       // 获取播放列表
       fetch(`https://m3u8-http-proxy.abc123abc123.workers.dev/${currentType}/`)
         .then(response => response.json())
-        .then(data => {
-          // 设置播放器源
-          const player = currentType === 'audio' ? document.getElementById('audio-player') : document.getElementById('video-player');
-          const source = currentType === 'audio' ? document.getElementById('audio-source') : document.getElementById('video-source');
+  .then(data => {
+    // 设置播放器源
+    const player = currentType === 'audio' ? document.getElementById('audio-player') : document.getElementById('video-player');
+    const source = currentType === 'audio' ? document.getElementById('audio-source') : document.getElementById('video-source');
 
-          // 加载第一个播放源
-          source.src = data[0].url; // 获取第一个源的 URL
-          source.title = data[0].title; // 获取标题
-          player.load();  // 重新加载播放器
-          player.play();  // 自动播放
-        })
-        .catch(error => console.error('获取播放列表失败', error));
+    // 加载第一个播放源
+    source.src = data[0].url; // 获取第一个源的 URL
+    source.title = data[0].title; // 获取标题
+    player.load();  // 重新加载播放器
+    player.play();  // 自动播放
+  })
+  .catch(error => console.error('获取播放列表失败', error));
     }
 
     // 默认加载音频
